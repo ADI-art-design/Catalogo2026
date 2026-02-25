@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Interactivo - Episodio II</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --gold: #ffcc00;
+            --dark: #0b0b0b;
+        }
+        body {
+            margin: 0;
+            background-color: var(--dark);
+            font-family: 'Montserrat', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid var(---gold);
+            width: 100%;
+        }
+        h1 { color: var(--gold); letter-spacing: 2px; text-transform: uppercase; }
+
+        /* Contenedor del Visor */
+        #pdf-viewer-container {
+            width: 90%;
+            max-width: 800px;
+            height: 600px;
+            overflow-y: auto;
+            margin: 20px 0;
+            background: #222;
+            border: 5px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Controles y Botones */
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn {
+            background: var(--gold);
+            color: black;
+            padding: 12px 25px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.05); }
+
+        /* QR Section */
+        .qr-container {
+            text-align: center;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        #qr-code { width: 120px; height: 120px; }
+        .qr-text { color: black; font-size: 0.8rem; font-weight: bold; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Episodio II: La Acción del Toro</h1>
+        <p>El Valor de las Cosas y las Personas</p>
+    </header>
+
+    <div id="pdf-viewer-container">
+        <div id="pdf-render"></div>
+    </div>
+
+    <div class="controls">
+        <a href="TU_ARCHIVO.pdf" download class="btn">DESCARGAR CATÁLOGO (PDF)</a>
+
+        <div class="qr-container">
+            <img id="qr-code" src="" alt="Código QR">
+            <div class="qr-text">ESCANEA PARA LLEVAR</div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN: Cambia esto por el nombre de tu archivo
+        const url = 'TU_ARCHIVO.pdf'; 
+
+        // Generar QR automáticamente basado en la URL actual
+        const qrImg = document.getElementById('qr-code');
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`;
+
+        // Lógica de PDF.js para renderizar el documento
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        let pdfDoc = null,
+            container = document.getElementById('pdf-render');
+
+        pdfjsLib.getDocument(url).promise.then(pdf => {
+            pdfDoc = pdf;
+            // Renderizar todas las páginas una tras otra
+            for (let num = 1; num <= pdf.numPages; num++) {
+                renderPage(num);
+            }
+        }).catch(err => {
+            container.innerHTML = `<p style="color:red">Error al cargar el PDF: Asegúrate de que el archivo '${url}' esté en la carpeta.</p>`;
+        });
+
+        function renderPage(num) {
+            const canvas = document.createElement('canvas');
+            container.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+            });
+        }
+    </script>
+</body>
+</html>
